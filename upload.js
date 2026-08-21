@@ -8,23 +8,37 @@ const GITHUB_USERNAME = process.env.GITHUB_USERNAME;
 const GITHUB_REPO = process.env.GITHUB_REPO;
 const GRAPH_URL = "https://graph.instagram.com/v26.0";
 
-const outputFolder = path.join(__dirname, "output");
+// UPDATED FOLDER NAME HERE
+const outputFolder = path.join(__dirname, "output_clips");
 const uploadedFolder = path.join(__dirname, "uploaded");
 if (!fs.existsSync(uploadedFolder)) fs.mkdirSync(uploadedFolder);
 
 async function publishNextClip() {
   try {
-    const files = fs.readdirSync(outputFolder).filter((file) => file.endsWith(".mp4"));
-    if (files.length === 0) {
-      console.log("No clips found in 'output'.");
+    // Failsafe in case folder doesn't exist yet
+    if (!fs.existsSync(outputFolder)) {
+      console.log("Folder 'output_clips' does not exist.");
       return;
     }
 
-    files.sort((a, b) => parseInt(a.match(/\d+/)?.[0] || 0) - parseInt(b.match(/\d+/)?.[0] || 0));
+    const files = fs.readdirSync(outputFolder).filter((file) => file.endsWith(".mp4"));
+    if (files.length === 0) {
+      console.log("No clips found in 'output_clips'.");
+      return;
+    }
+
+    // Sort files based ONLY on the number that comes after "part"
+    files.sort((a, b) => {
+      const numA = parseInt((a.match(/part\s*(\d+)/i) || [])[1] || 0);
+      const numB = parseInt((b.match(/part\s*(\d+)/i) || [])[1] || 0);
+      return numA - numB;
+    });
+    
     const file = files[0];
     
-    // Auto-extract the number from the filename (e.g., "part1.mp4" -> "1")
-    const partNumber = file.match(/\d+/)?.[0] || "1";
+    // Extract the part number for the caption
+    const match = file.match(/part\s*(\d+)/i);
+    const partNumber = match ? match[1] : "1";
     
     // Inject the number dynamically into the caption
     const clipCaption = `#part${partNumber} Doraemon' Bids Farewell After 37 years,
@@ -58,7 +72,8 @@ Doremon
 nobitalovers
 nostalgic`;
     
-    const videoUrl = `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${GITHUB_REPO}/main/output/${encodeURIComponent(file)}`;
+    // UPDATED FOLDER NAME IN THE URL
+    const videoUrl = `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${GITHUB_REPO}/main/output_clips/${encodeURIComponent(file)}`;
     console.log(`Uploading ${file} from GitHub to Meta...`);
 
     const containerRes = await axios.post(`${GRAPH_URL}/${IG_USER_ID}/media`, {
@@ -88,6 +103,7 @@ nostalgic`;
     });
     console.log(`Successfully Published! ID: ${publishRes.data.id}`);
     
+    // Move the file so it doesn't post again
     fs.renameSync(path.join(outputFolder, file), path.join(uploadedFolder, file));
     
   } catch (err) {
