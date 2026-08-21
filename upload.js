@@ -8,14 +8,12 @@ const GITHUB_USERNAME = process.env.GITHUB_USERNAME;
 const GITHUB_REPO = process.env.GITHUB_REPO;
 const GRAPH_URL = "https://graph.instagram.com/v26.0";
 
-// UPDATED FOLDER NAME HERE
 const outputFolder = path.join(__dirname, "output_clips");
 const uploadedFolder = path.join(__dirname, "uploaded");
 if (!fs.existsSync(uploadedFolder)) fs.mkdirSync(uploadedFolder);
 
 async function publishNextClip() {
   try {
-    // Failsafe in case folder doesn't exist yet
     if (!fs.existsSync(outputFolder)) {
       console.log("Folder 'output_clips' does not exist.");
       return;
@@ -27,12 +25,8 @@ async function publishNextClip() {
       return;
     }
 
-    // Sort files based ONLY on the number that comes after "part"
-    files.sort((a, b) => {
-      const numA = parseInt((a.match(/part\s*(\d+)/i) || [])[1] || 0);
-      const numB = parseInt((b.match(/part\s*(\d+)/i) || [])[1] || 0);
-      return numA - numB;
-    });
+    // Smart natural sorting (Understands 1A vs 1B, and knows 6 comes before 10)
+    files.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
     
     const file = files[0];
     
@@ -72,7 +66,6 @@ Doremon
 nobitalovers
 nostalgic`;
     
-    // UPDATED FOLDER NAME IN THE URL
     const videoUrl = `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${GITHUB_REPO}/main/output_clips/${encodeURIComponent(file)}`;
     console.log(`Uploading ${file} from GitHub to Meta...`);
 
