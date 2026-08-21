@@ -1,0 +1,42 @@
+name: Instagram Auto Poster
+
+on:
+  schedule:
+    # Runs at 8am, 10am, 12pm, 2pm, 4pm, 6pm, 8pm, 10pm IST
+    - cron: '30 2,4,6,8,10,12,14,16 * * *'
+  workflow_dispatch: # Allows you to test it manually right now
+
+permissions:
+  contents: write
+
+jobs:
+  post-reel:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install Dependencies
+        run: npm install axios
+
+      - name: Run Upload Script
+        env:
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+          GITHUB_USERNAME: ${{ github.repository_owner }}
+          GITHUB_REPO: ${{ github.event.repository.name }}
+        run: node upload.js
+
+      - name: Save Changes
+        run: |
+          git config --global user.name 'GitHub Actions Bot'
+          git config --global user.email 'actions@github.com'
+          mkdir -p uploaded
+          git add output/ uploaded/
+          git commit -m "Moved uploaded clip" || echo "No changes to commit"
+          git push
