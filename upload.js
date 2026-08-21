@@ -20,18 +20,44 @@ async function publishNextClip() {
       return;
     }
 
-    // Sort numerically
     files.sort((a, b) => parseInt(a.match(/\d+/)?.[0] || 0) - parseInt(b.match(/\d+/)?.[0] || 0));
     const file = files[0];
     
-    // Caption logic: Check for matching .txt file
-    const txtFile = path.join(outputFolder, file.replace(".mp4", ".txt"));
-    let clipCaption = "Doraemon' Bids Farewell After 37 years...\n\n#Entertainment #Doraemon #Nostalgia #childhood";
-    if (fs.existsSync(txtFile)) {
-      clipCaption = fs.readFileSync(txtFile, "utf-8");
-    }
+    // Auto-extract the number from the filename (e.g., "part1.mp4" -> "1")
+    const partNumber = file.match(/\d+/)?.[0] || "1";
     
-    // Public raw GitHub URL
+    // Inject the number dynamically into the caption
+    const clipCaption = `#part${partNumber} Doraemon' Bids Farewell After 37 years,
+
+Fans Flood Social Media;
+
+: Read More
+
+For millions of viewers in Indonesia, a beloved Sunday morning ritual has quietly come to an end.
+
+After nearly 37 years on the air, the iconic Japanese anime Doraemon, the story of a blue robot cat from the future and his friend Nobita has officially stopped broadcasting on the Indonesian television network RCTI.
+
+First aired in 1989, more than just a cartoon, it was a daily companion, a source of laughter, life lessons, and weekend routines for millions across the country.
+
+Fans noticed the absence of Doraemon from RCTI's schedule in late December 2025 and confirmed in early January 2026 that the show would no longer air.
+
+The announcement sparked an outpouring of emotion on social media, with platforms flooded with nostalgic posts, heartfelt messages, and memories of watching Doraemon with family and friends.
+
+While RCTI has not officially explained the reason behind the move, the shift comes amid evolving viewing habits and the rise of digital streaming platforms, where some episodes and films may still be available.
+
+#Entertainment #Doraemon #Nostalgia #childhood
+#Doreamon
+Doraemon
+DoreamonLover
+Nobita
+Cartoon
+BestFriends
+Friendship
+Shizuka
+Doremon
+nobitalovers
+nostalgic`;
+    
     const videoUrl = `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${GITHUB_REPO}/main/output/${encodeURIComponent(file)}`;
     console.log(`Uploading ${file} from GitHub to Meta...`);
 
@@ -62,11 +88,8 @@ async function publishNextClip() {
     });
     console.log(`Successfully Published! ID: ${publishRes.data.id}`);
     
-    // Move both files to uploaded folder
     fs.renameSync(path.join(outputFolder, file), path.join(uploadedFolder, file));
-    if (fs.existsSync(txtFile)) {
-      fs.renameSync(txtFile, path.join(uploadedFolder, path.basename(txtFile)));
-    }
+    
   } catch (err) {
     console.error("Upload failed:", err.response ? JSON.stringify(err.response.data) : err.message);
     process.exit(1);
