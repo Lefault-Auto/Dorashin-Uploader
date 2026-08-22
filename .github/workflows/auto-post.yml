@@ -1,9 +1,6 @@
 name: Instagram Auto Poster
 
 on:
-  schedule:
-    # Runs at 8am, 10am, 12pm, 2pm, 4pm, 6pm, 8pm, 10pm IST
-    - cron: '30 2,4,6,8,10,12,14,16 * * *'
   workflow_dispatch:
 
 permissions:
